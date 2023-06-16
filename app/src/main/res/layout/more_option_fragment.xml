@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/content_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <ImageView
+        android:id="@+id/image_back"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="40dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/asset_icon_24_24_ico_back_arrow_white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/streaming_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_marginTop="40dp"
+        android:gravity="center"
+        android:text="@string/live"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/background_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/black90"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/image_pip" />
+
+    <TextView
+        android:id="@+id/confirm"
+        android:layout_width="120dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/button_round25_white"
+        android:gravity="center"
+        android:text="@string/confirm"
+        android:textColor="@color/black"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/background_bottom"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/mic_on"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="24dp"
+        android:checked="true"
+        android:drawablePadding="4dp"
+        android:enabled="true"
+        android:gravity="center_vertical"
+        android:text="@string/mic_on"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        app:drawableStartCompat="@drawable/ic__1_asset_icon_22_22_ico_mic"
+        app:layout_constraintBottom_toTopOf="@+id/confirm"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="24dp"
+        android:background="@color/white2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mic_on"/>
+
+    <TextView
+        android:id="@+id/image_pip"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:drawablePadding="4dp"
+        android:gravity="center"
+        android:text="@string/transition_mode_pip"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintEnd_toStartOf="@+id/image_transition_fade"
+        app:layout_constraintBottom_toTopOf="@+id/mic_on"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/image_transition_fade"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:drawablePadding="4dp"
+        android:gravity="center"
+        android:text="@string/transition_mode_fade"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@+id/image_pip"
+        app:layout_constraintBottom_toTopOf="@+id/mic_on"
+        app:layout_constraintEnd_toStartOf="@+id/image_transition_normal" />
+
+    <TextView
+        android:id="@+id/image_transition_normal"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:drawablePadding="4dp"
+        android:gravity="center"
+        android:text="@string/transition_mode_normal"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@+id/image_transition_fade"
+        app:layout_constraintBottom_toTopOf="@+id/mic_on"
+        app:layout_constraintEnd_toStartOf="@+id/image_transition_top" />
+
+    <TextView
+        android:id="@+id/image_transition_top"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:drawablePadding="4dp"
+        android:gravity="center"
+        android:text="@string/transition_mode_top"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@+id/image_transition_normal"
+        app:layout_constraintBottom_toTopOf="@+id/mic_on"
+        app:layout_constraintEnd_toStartOf="@+id/image_transition_bottom" />
+
+    <TextView
+        android:id="@+id/image_transition_bottom"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:drawablePadding="4dp"
+        android:gravity="center"
+        android:text="@string/transition_mode_bottom"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@+id/image_transition_top"
+        app:layout_constraintBottom_toTopOf="@+id/mic_on"
+        app:layout_constraintEnd_toStartOf="@+id/image_transition_left" />
+
+    <TextView
+        android:id="@+id/image_transition_left"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:drawablePadding="4dp"
+        android:gravity="center"
+        android:text="@string/transition_mode_left"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@+id/image_transition_bottom"
+        app:layout_constraintBottom_toTopOf="@+id/mic_on"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:background="@color/white2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/image_pip"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

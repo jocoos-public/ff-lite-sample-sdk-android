@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_main"
+    app:startDestination="@id/mainFragment">
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.jocoos.flipflop.sample.main.MainFragment"
+        android:label="main_fragment"
+        tools:layout="@layout/main_fragment">
+
+        <action
+            android:id="@+id/streaming"
+            app:destination="@id/streamingFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/streamingFragment"
+        android:name="com.jocoos.flipflop.sample.live.StreamingFragment"
+        android:label="streaming_fragment"
+        tools:layout="@layout/streaming_fragment">
+
+    </fragment>
+
+</navigation>

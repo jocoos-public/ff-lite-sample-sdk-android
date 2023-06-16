@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_streaming_front"
+    app:startDestination="@id/streamingPrepareFragment">
+
+    <fragment
+        android:id="@+id/streamingPrepareFragment"
+        android:name="com.jocoos.flipflop.sample.live.StreamingPrepareFragment"
+        android:label="streaming_prepare_fragment"
+        tools:layout="@layout/streaming_prepare_fragment">
+
+        <action
+            android:id="@+id/cameraOption"
+            app:destination="@id/cameraOptionFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/moreOption"
+            app:destination="@id/moreOptionFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/live"
+            app:destination="@id/liveFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/cameraOptionFragment"
+        android:name="com.jocoos.flipflop.sample.live.CameraOptionFragment"
+        android:label="camera_option_fragment"
+        tools:layout="@layout/camera_option_fragment">
+    </fragment>
+
+    <fragment
+        android:id="@+id/moreOptionFragment"
+        android:name="com.jocoos.flipflop.sample.live.MoreOptionFragment"
+        android:label="more_option_fragment"
+        tools:layout="@layout/more_option_fragment">
+    </fragment>
+
+    <fragment
+        android:id="@+id/liveFragment"
+        android:name="com.jocoos.flipflop.sample.live.StreamingLiveFragment"
+        android:label="streaming_live_fragment"
+        tools:layout="@layout/streaming_live_fragment">
+
+        <action
+            android:id="@+id/cameraOption"
+            app:destination="@id/cameraOptionFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/moreOption"
+            app:destination="@id/moreOptionFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+    </fragment>
+
+</navigation>

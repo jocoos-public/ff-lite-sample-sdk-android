@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">ff-lite-sdk-sample</string>
+
+    <string name="live_streaming_desc">Try out and experience our live video streaming targeting a large audience for 5 minutes.</string>
+    <string name="start">Start</string>
+    <string name="live" translatable="false">LIVE</string>
+    <string name="confirm">OK</string>
+    <string name="mic_on">Mic on</string>
+    <string name="transition_mode_top">Top</string>
+    <string name="transition_mode_bottom">Bottom</string>
+    <string name="transition_mode_left">Left</string>
+    <string name="transition_mode_pip">Pip</string>
+    <string name="transition_mode_fade">Fade</string>
+    <string name="transition_mode_normal">Normal</string>
+    <string name="exposure_min_value" translatable="false">-%1$s</string>
+    <string name="exposure_max_value" translatable="false">+%1$s</string>
+    <string name="recent_item">Recent item</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_items">No items</string>
+    <string name="message_send">Input message</string>
+
+</resources>

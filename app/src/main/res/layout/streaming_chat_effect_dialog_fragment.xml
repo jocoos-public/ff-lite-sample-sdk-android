@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/content_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/black70"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/image_effect"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center"
+        android:padding="15dp"
+        android:scaleType="centerInside"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/image_close"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="15dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/asset_icon_22_22_ico_close"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/message_frame"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:background="@drawable/message_background"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/image_effect">
+
+        <TextView
+            android:id="@+id/chat_message"
+            android:layout_width="0dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="20dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textColor="@color/black"
+            android:textColorHint="@color/light"
+            android:textSize="16sp" >
+            <requestFocus/>
+        </TextView>
+
+        <ImageView
+            android:id="@+id/icon_effect"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/group_5_effect"
+            android:backgroundTint="@color/colorPrimary"
+            android:scaleType="centerInside" />
+
+        <ImageView
+            android:id="@+id/image_send"
+            android:layout_width="27dp"
+            android:layout_height="27dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/circle_color_primary"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_group_4" />
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/effect_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:padding="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/message_frame" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
