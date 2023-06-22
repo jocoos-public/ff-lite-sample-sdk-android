@@ -12,8 +12,8 @@
         tools:layout="@layout/main_fragment">
 
         <action
-            android:id="@+id/streaming"
-            app:destination="@id/streamingFragment"
+            android:id="@+id/videoList"
+            app:destination="@id/videoListFragment"
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
@@ -22,10 +22,42 @@
     </fragment>
 
     <fragment
-        android:id="@+id/streamingFragment"
-        android:name="com.jocoos.flipflop.sample.live.StreamingFragment"
+        android:id="@+id/videoListFragment"
+        android:name="com.jocoos.flipflop.sample.main.MainListFragment"
         android:label="streaming_fragment"
         tools:layout="@layout/streaming_fragment">
+
+        <action
+            android:id="@+id/watchLive"
+            app:destination="@id/streamingViewFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
+            android:id="@+id/playVod"
+            app:destination="@id/playerVodFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/streamingViewFragment"
+        android:name="com.jocoos.flipflop.sample.live.StreamingViewFragment"
+        android:label="streaming_view_fragment"
+        tools:layout="@layout/streaming_view_fragment">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/playerVodFragment"
+        android:name="com.jocoos.flipflop.sample.vod.PlayerVodFragment"
+        android:label="player_vod_fragment"
+        tools:layout="@layout/player_vod_fragment">
 
     </fragment>
 

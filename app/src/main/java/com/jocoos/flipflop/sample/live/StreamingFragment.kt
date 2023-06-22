@@ -1,13 +1,17 @@
 package com.jocoos.flipflop.sample.live
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -20,12 +24,20 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.jocoos.flipflop.*
 import com.jocoos.flipflop.FFLite
+import com.jocoos.flipflop.sample.FlipFlopSampleApp
 import com.jocoos.flipflop.sample.R
+import com.jocoos.flipflop.sample.api.ApiManager
 import com.jocoos.flipflop.sample.databinding.StreamingFragmentBinding
+import com.jocoos.flipflop.sample.utils.IOCoroutineScope
+import com.jocoos.flipflop.sample.utils.PreferenceManager
 import com.jocoos.flipflop.sample.utils.launchAndRepeatOnLifecycle
 import com.jocoos.flipflop.sample.utils.setMarginBottom
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * check createStreamer(), FLStreamerListener
@@ -33,11 +45,34 @@ import kotlinx.coroutines.launch
 class StreamingFragment : Fragment(), FFLStreamerListener {
     private var _binding: StreamingFragmentBinding? = null
     private val binding get() = _binding!!
+    private val scope: CoroutineScope = IOCoroutineScope()
+
+    private var streamingInfo: StreamingInfo? = null
+    private var videoRoomId: Long = -1
+
     private lateinit var frontNavController: NavController
     private val viewModel: StreamingViewModel by viewModels()
     private var fflStreamer: FFLStreamer? = null
 
     private val chatListAdapter = ChatListAdapter()
+    private lateinit var backPressedCallback: OnBackPressedCallback
+    private var finished = false
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        backPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                this.isEnabled = false
+                endLiveStreaming()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(this, backPressedCallback)
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        backPressedCallback.remove()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -63,7 +98,17 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
             }
         }
 
-        createStreamer()
+        requireArguments().run {
+            streamingInfo = getParcelable(PreferenceManager.KEY_STREAMING_INFO)
+        }
+
+        if (streamingInfo == null) {
+            Toast.makeText(requireContext(), "stream key and app user id should not be empty", Toast.LENGTH_SHORT).show()
+            requireActivity().finish()
+            return
+        }
+
+        createStreamer(streamingInfo!!)
         initChatList()
     }
 
@@ -118,8 +163,10 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
                 }
                 is StreamingState.StartLiveState -> {
                     // start live streaming
-                    fflStreamer?.start()
-                    binding.playTime.start(System.currentTimeMillis())
+                    startLiveStreaming()
+                }
+                is StreamingState.EndLiveState -> {
+                    endLiveStreaming()
                 }
                 is StreamingState.MessageSendState -> {
                     if (it.receiver == null) {
@@ -141,32 +188,84 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
 
     /**
      * initialize streamer for live streaming
-     *
-     * you should get parameters(appId, user info, streamKey, chatToken, channelKey) from server
-     * (client app <--> your server <--> flipflop lite server)
      */
-    private fun createStreamer() {
-        fflStreamer = FlipFlopLite.getStreamer(
-            "APP_ID",
-            FFLite.User("USER_ID", "USERNAME"),
-            "STREAM_KEY",
-            "CHAT_TOKEN",
-            "CHANNEL_KEY"
-        ).apply {
-            listener = this@StreamingFragment
-            // comment this out if you do not want to test chatting
-            enter()
-            prepare(requireContext(), binding.liveView, FFStreamerConfig(videoBitrate = 3000 * 1024, fps = 30, sampleRate = 44100))
-            zoomChangeListener = object : FFZoomChangeListener {
-                override fun onZoomChanged(zoomFactor: Float) {
-                    binding.zoomFactor.text = zoomFactor.toString()
+    private fun createStreamer(streamingInfo: StreamingInfo) {
+        scope.launch {
+            // create video room before live streaming
+            val createdVideoRoomInfo = ApiManager.getInstance().createVideoRoom(streamingInfo.appUserId, "Sample App Test")
+            videoRoomId = createdVideoRoomInfo.id
+            val channelKey = createdVideoRoomInfo.chat.channelKey
+
+            withContext(Dispatchers.Main) {
+                fflStreamer = FlipFlopLite.getStreamer(
+                    streamingInfo.chatAppId,
+                    FFLite.User(streamingInfo.userId, streamingInfo.userName),
+                    streamingInfo.streamKey,
+                    streamingInfo.chatToken,
+                    channelKey
+                ).apply {
+                    listener = this@StreamingFragment
+                    // comment this out if you do not want to test chatting
+                    enter()
+                    prepare(requireContext(), binding.liveView, FFStreamerConfig(videoBitrate = 3000 * 1024, fps = 30, sampleRate = 44100))
+                    zoomChangeListener = object : FFZoomChangeListener {
+                        override fun onZoomChanged(zoomFactor: Float) {
+                            binding.zoomFactor.text = zoomFactor.toString()
+                        }
+                    }
                 }
+
+                // need some time to get exposure after initializing streamer
+                // that's why this uses delay
+                viewModel.requestInitExposure(300)
             }
         }
+    }
 
-        // need some time to get exposure after initializing streamer
-        // that's why this uses delay
-        viewModel.requestInitExposure(300)
+    private fun startLiveStreaming() {
+        binding.centerInfo.text = "Preparing live streaming.\nplease wait a minute for this message to disappear!"
+        binding.centerInfo.isVisible = true
+
+        fflStreamer?.start()
+        binding.playTime.start(System.currentTimeMillis())
+
+        scope.launch {
+            // WARN: This is just test. You should not wait here like this on production.
+            // Check server api from FlipFlop Lite
+            delay(20_000)
+
+            ApiManager.getInstance().startBroadcast(videoRoomId)
+
+            withContext(Dispatchers.Main) {
+                binding.centerInfo.isVisible = false
+                Toast.makeText(requireContext(), "started broadcast!", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun endLiveStreaming() {
+        if (finished) {
+            return
+        }
+
+        finished = true
+        fflStreamer?.stop()
+
+        binding.centerInfo.text = "Ending live streaming.\nplease wait a minute!\n"
+        binding.centerInfo.isVisible = true
+
+        scope.launch {
+            // WARN: This is just test. You should not wait here like this on production.
+            // Check server api from FlipFlop Lite
+            delay(5_000)
+
+            ApiManager.getInstance().endBroadcast(videoRoomId)
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "ended broadcast!", Toast.LENGTH_LONG).show()
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+            }
+        }
     }
 
     private fun initCameraExposure() {
@@ -182,10 +281,6 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
             }
             adapter = chatListAdapter
         }
-    }
-
-    private fun addJoinMessage(username: String) {
-        // show join message
     }
 
     private fun finish() {
@@ -237,9 +332,10 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
     }
 
     override fun onChatMessageReceived(item: FFMessage) {
+        println("onChatMessageReceived")
         when (item.messageType) {
             FFMessageType.JOIN -> {
-                addJoinMessage(item.username)
+                chatListAdapter.add(ChatItem(item.userId, item.username, "joined ${item.username}", item.messageId ?: "0", item.channelKey))
                 viewModel.updateLiveCount(item.totalWatchCount)
             }
             FFMessageType.LEAVE -> {

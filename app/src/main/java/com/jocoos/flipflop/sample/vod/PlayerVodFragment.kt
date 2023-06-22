@@ -4,13 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.jocoos.flipflop.*
-import com.jocoos.flipflop.api.model.Video
 import com.jocoos.flipflop.sample.databinding.PlayerVodFragmentBinding
 import com.jocoos.flipflop.sample.live.ChatListAdapter
+import com.jocoos.flipflop.sample.live.VodInfo
+import com.jocoos.flipflop.sample.utils.PreferenceManager
+import com.jocoos.flipflop.sample.utils.toDateTime
 
 /**
  * check createPlayer()
@@ -22,11 +26,7 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
     private val chatListAdapter = ChatListAdapter()
 
     private var player: FFLVodPlayer? = null
-    private lateinit var video: Video
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
+    private var vodInfo: VodInfo? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,6 +38,15 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        requireArguments().run {
+            vodInfo = getParcelable(PreferenceManager.KEY_VOD_INFO)
+        }
+        if (vodInfo == null) {
+            Toast.makeText(requireContext(), "need vod info", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
+        }
+
         initChatList()
         createPlayer()
     }
@@ -48,7 +57,7 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
 
     override fun onResume() {
         super.onResume()
-        player?.start("VOD_URL")
+        player?.start(vodInfo!!.vodUrl)
         binding.playerView.hideController()
     }
 
@@ -73,11 +82,11 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
 
     private fun createPlayer() {
         player = FlipFlopLite.getVodPlayer(
-            "APP_ID",
-            "CHANNEL_KEY",
-            "CHAT_TOKEN",
-            0, // change it to start time of the live session
-            "USER_ID"
+            vodInfo!!.chatAppId,
+            vodInfo!!.channelKey,
+            vodInfo!!.chatToken,
+            vodInfo?.liveStartedAt?.toDateTime()?.time ?: 0, // change it to start time of the live session
+            vodInfo!!.userId
         ).apply {
             listener = this@PlayerVodFragment
             enter()
@@ -104,7 +113,7 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
 
     override fun onPrepared() {
         println("onPrepared")
-        player?.start("VOD_URL")
+        player?.start(vodInfo!!.vodUrl)
     }
 
     override fun onStarted() {
@@ -121,6 +130,7 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
 
     override fun onCompleted() {
         println("onCompleted")
+        Toast.makeText(requireContext(), "vod has been finished", Toast.LENGTH_SHORT).show()
     }
 
     override fun onChatMessageReceived(item: FFMessage) {

@@ -8,6 +8,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.jocoos.flipflop.sample.login.LoginActivity
 import com.jocoos.flipflop.sample.main.MainActivity
 
 /**
@@ -84,11 +85,24 @@ class LaunchActivity : AppCompatActivity() {
         }
 
         initialized = true
-        showMain()
+        if (FlipFlopSampleApp.preferenceManager.username.isNotEmpty()) {
+            showMain()
+        } else {
+            showLogin()
+        }
+
     }
 
     private fun showMain() {
         val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+
+        finish()
+    }
+
+    private fun showLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
 

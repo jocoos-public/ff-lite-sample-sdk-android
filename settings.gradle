@@ -8,7 +8,7 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        maven { url 'https://jocoos2.jfrog.io/artifactory/default-maven-local/' }
+        maven { url 'https://jitpack.io' }
         google()
         mavenCentral()
     }

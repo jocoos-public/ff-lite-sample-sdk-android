@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 class StreamingLiveFragment : Fragment() {
     private var _binding: StreamingLiveFragmentBinding? = null
     private val binding get() = _binding!!
+
     private val viewModel: StreamingViewModel by viewModels({requireParentFragment().requireParentFragment()})
 
     override fun onCreateView(
@@ -48,7 +49,7 @@ class StreamingLiveFragment : Fragment() {
         }
 
         binding.imageClose.setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            viewModel.endBroadcast()
         }
         binding.imageEtc.setOnClickListener {
             it.findNavController().navigate(R.id.moreOption)

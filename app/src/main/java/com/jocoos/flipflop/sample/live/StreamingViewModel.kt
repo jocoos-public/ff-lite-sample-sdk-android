@@ -1,6 +1,7 @@
 package com.jocoos.flipflop.sample.live
 
 import android.net.Uri
+import android.os.Parcelable
 import androidx.lifecycle.ViewModel
 import com.jocoos.flipflop.ExposureCompensationRange
 import com.jocoos.flipflop.FFFilterType
@@ -11,6 +12,37 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+data class StreamingInfo(
+    val appUserId: String,
+    val streamKey: String,
+    val chatToken: String,
+    val chatAppId: String,
+    val userId: String,
+    val userName: String,
+): Parcelable
+
+@Parcelize
+data class LiveWatchInfo(
+    val liveUrl: String,
+    val userId: String,
+    val userName: String,
+    val chatToken: String,
+    val chatAppId: String,
+    val channelKey: String,
+): Parcelable
+
+@Parcelize
+data class VodInfo(
+    val userId: String,
+    val vodUrl: String,
+    val chatToken: String,
+    val chatAppId: String,
+    val channelKey: String,
+    val liveStartedAt: String
+): Parcelable
 
 enum class MainAction { CANCEL, INIT_EXPOSURE, END_CHAT_EFFECT }
 
@@ -27,6 +59,7 @@ sealed class StreamingState {
     data class MessageSendState(val messageType: FFMessageType, val message: String, val customType: String, val data: String, val receiver: String? = null) : StreamingState()
     object NormalState : StreamingState()
     object StartLiveState : StreamingState()
+    object EndLiveState : StreamingState()
 }
 
 class StreamingOption {
@@ -169,6 +202,12 @@ class StreamingViewModel : ViewModel() {
     fun updateLiveCount(viewCount: Long = 0) {
         onLaunch(Dispatchers.Main) {
             _streamLiveAction.emit(StreamingLiveState.UpdateCountState(viewCount))
+        }
+    }
+
+    fun endBroadcast() {
+        onLaunch(Dispatchers.Main) {
+            _streamAction.emit(StreamingState.EndLiveState)
         }
     }
 }

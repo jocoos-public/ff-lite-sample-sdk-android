@@ -5,12 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.jocoos.flipflop.*
-import com.jocoos.flipflop.api.model.Video
 import com.jocoos.flipflop.sample.databinding.StreamingViewFragmentBinding
+import com.jocoos.flipflop.sample.utils.PreferenceManager
 
 /**
  * check createPlayer()
@@ -23,7 +25,7 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
     private var _binding: StreamingViewFragmentBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var video: Video
+    private var liveWatchInfo: LiveWatchInfo? = null
     private var player: FFLLivePlayer? = null
     private val chatListAdapter = ChatListAdapter()
 
@@ -36,6 +38,19 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        requireArguments().run {
+            liveWatchInfo = getParcelable(PreferenceManager.KEY_LIVE_WATCH_INFO)
+        }
+        if (liveWatchInfo == null) {
+            Toast.makeText(requireContext(), "need live info", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
+        }
+
+        binding.messageSend.setOnClickListener {
+            showMessageDialog("")
+        }
+
         createPlayer()
         initChatList()
     }
@@ -51,7 +66,7 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
         super.onResume()
         player?.apply {
             enter()
-            start("VIDEO_URL")
+            start(liveWatchInfo!!.liveUrl)
         }
     }
 
@@ -81,10 +96,10 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
         binding.liveView.visibility = VISIBLE
 
         player = FlipFlopLite.getLivePlayer(
-            "APP_ID",
-            FFLite.User("USER_ID", "USERNAME"),
-            "GOSSIP_TOKEN",
-            "CHANNEL_KEY"
+            liveWatchInfo!!.chatAppId,
+            FFLite.User(liveWatchInfo!!.userId, liveWatchInfo!!.userName),
+            liveWatchInfo!!.chatToken,
+            liveWatchInfo!!.channelKey
         ).apply {
             listener = this@StreamingViewFragment
             enter()
@@ -101,8 +116,14 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
         }
     }
 
-    private fun addJoinMessage(username: String) {
-        // show join message
+    private fun showMessageDialog(message: String = "") {
+        val dialog = StreamingMessageDialogFragment(
+            message = message,
+            sendListener = {
+                player?.liveChat()?.sendMessage(it)
+            },
+        )
+        dialog.show(childFragmentManager, dialog.tag)
     }
 
     override fun onPrepared() {
@@ -119,6 +140,7 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
 
     override fun onCompleted() {
         println("onCompleted")
+        Toast.makeText(requireContext(), "live has been finished", Toast.LENGTH_SHORT).show()
     }
 
     override fun onStopped() {
@@ -128,13 +150,14 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
     override fun onChatMessageReceived(item: FFMessage) {
         when (item.messageType) {
             FFMessageType.JOIN -> {
-                addJoinMessage(item.username)
+                chatListAdapter.add(ChatItem(item.userId, item.username, "joined ${item.username}", item.messageId ?: "0", item.channelKey))
             }
             FFMessageType.LEAVE -> {
                 // do something
             }
             FFMessageType.MESSAGE -> {
                 // do something
+                chatListAdapter.add(ChatItem(item.userId, item.username, item.message, item.messageId ?: "0", item.channelKey))
             }
             FFMessageType.DM -> {
                 // do something

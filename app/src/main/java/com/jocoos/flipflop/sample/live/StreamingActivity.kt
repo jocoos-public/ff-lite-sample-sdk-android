@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import com.jocoos.flipflop.sample.R
 import com.jocoos.flipflop.sample.databinding.StreamingActivityBinding
+import com.jocoos.flipflop.sample.utils.PreferenceManager
 import com.jocoos.flipflop.sample.utils.makeStatusBarTransparent
 
 /**
@@ -22,6 +24,14 @@ class StreamingActivity : AppCompatActivity() {
         setContentView(view)
 
         makeStatusBarTransparent()
+
+        val extras = intent.extras
+        val streamingInfo = extras!!.getParcelable<StreamingInfo>(PreferenceManager.KEY_STREAMING_INFO)!!
+        val bundle = Bundle().apply {
+            putParcelable(PreferenceManager.KEY_STREAMING_INFO, streamingInfo)
+        }
+        (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment)
+            .navController.setGraph(R.navigation.nav_streaming, bundle)
     }
 
     override fun onResume() {

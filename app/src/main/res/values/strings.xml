@@ -18,5 +18,6 @@
     <string name="cancel">Cancel</string>
     <string name="no_items">No items</string>
     <string name="message_send">Input message</string>
+    <string name="username_hint">Username</string>
 
 </resources>

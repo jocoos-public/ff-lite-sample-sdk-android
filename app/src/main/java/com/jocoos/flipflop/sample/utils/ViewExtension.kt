@@ -18,6 +18,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.threeten.bp.DateTimeUtils
+import org.threeten.bp.ZoneId
+import org.threeten.bp.ZonedDateTime
+import org.threeten.bp.format.DateTimeFormatter
+import java.util.Date
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -85,3 +90,8 @@ fun TextView.onTextChanged(
     override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) =
         onTextChanged(s.toString(), start, before, count)
 })
+
+fun String.toDateTime(): Date {
+    return DateTimeUtils
+        .toDate(ZonedDateTime.parse(this, DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.systemDefault())).toInstant())
+}
