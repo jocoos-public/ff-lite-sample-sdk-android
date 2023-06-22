@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ff-lite-sdk-android-sample"
+rootProject.name = "ff-lite-sample-sdk-android"
 include ':app'
