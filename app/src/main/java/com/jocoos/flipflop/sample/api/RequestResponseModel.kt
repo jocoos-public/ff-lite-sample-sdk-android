@@ -1,7 +1,7 @@
 package com.jocoos.flipflop.sample.api
 
 class CreateUserRequest(val username: String, val password: String, val email: String)
-class CreateUserResponse(val _id: String, val username: String, email: String)
+class CreateUserResponse(val id: String, val username: String, email: String)
 
 class LoginRequest(val username: String, val password: String)
 class LoginResponse(val accessToken: String, val fflTokens: FFLTokens)

@@ -53,7 +53,7 @@ class LoginFragment : Fragment() {
                 scope.launch {
                     val response = ApiManager.getInstance().createUser(username, testPassword, testEmail)
                     withContext(Dispatchers.Main) {
-                        FlipFlopSampleApp.preferenceManager.setUserInfo(response._id, username, testPassword)
+                        FlipFlopSampleApp.preferenceManager.setUserInfo(response.id, username, testPassword)
                         delay(200)
                         showMain()
                     }
