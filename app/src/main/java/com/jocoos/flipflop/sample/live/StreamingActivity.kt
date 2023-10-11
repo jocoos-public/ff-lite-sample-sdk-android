@@ -26,9 +26,9 @@ class StreamingActivity : AppCompatActivity() {
         makeStatusBarTransparent()
 
         val extras = intent.extras
-        val streamingInfo = extras!!.getParcelable<StreamingInfo>(PreferenceManager.KEY_STREAMING_INFO)!!
+        val accessToken = extras!!.getString(PreferenceManager.KEY_ACCESS_TOKEN)!!
         val bundle = Bundle().apply {
-            putParcelable(PreferenceManager.KEY_STREAMING_INFO, streamingInfo)
+            putString(PreferenceManager.KEY_ACCESS_TOKEN, accessToken)
         }
         (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment)
             .navController.setGraph(R.navigation.nav_streaming, bundle)

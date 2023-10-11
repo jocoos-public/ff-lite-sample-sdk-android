@@ -15,55 +15,59 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.jocoos.flipflop.*
-import com.jocoos.flipflop.FFLite
-import com.jocoos.flipflop.sample.FlipFlopSampleApp
+import com.jocoos.flipflop.api.model.FFLMessage
+import com.jocoos.flipflop.api.model.Origin
+import com.jocoos.flipflop.events.BroadcastState
+import com.jocoos.flipflop.events.StreamerEvent
+import com.jocoos.flipflop.events.StreamerState
+import com.jocoos.flipflop.events.collect
 import com.jocoos.flipflop.sample.R
-import com.jocoos.flipflop.sample.api.ApiManager
 import com.jocoos.flipflop.sample.databinding.StreamingFragmentBinding
+import com.jocoos.flipflop.sample.utils.DialogBuilder
 import com.jocoos.flipflop.sample.utils.IOCoroutineScope
 import com.jocoos.flipflop.sample.utils.PreferenceManager
 import com.jocoos.flipflop.sample.utils.launchAndRepeatOnLifecycle
 import com.jocoos.flipflop.sample.utils.setMarginBottom
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * check createStreamer(), FLStreamerListener
  */
-class StreamingFragment : Fragment(), FFLStreamerListener {
+class StreamingFragment : Fragment() {
     private var _binding: StreamingFragmentBinding? = null
     private val binding get() = _binding!!
     private val scope: CoroutineScope = IOCoroutineScope()
 
-    private var streamingInfo: StreamingInfo? = null
     private var videoRoomId: Long = -1
 
     private lateinit var frontNavController: NavController
     private val viewModel: StreamingViewModel by viewModels()
+    private var accessToken = ""
     private var fflStreamer: FFLStreamer? = null
 
     private val chatListAdapter = ChatListAdapter()
     private lateinit var backPressedCallback: OnBackPressedCallback
     private var finished = false
+    private var isStreaming = false
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         backPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 this.isEnabled = false
-                endLiveStreaming()
+                handleBackButton()
             }
         }
         requireActivity().onBackPressedDispatcher.addCallback(this, backPressedCallback)
@@ -72,6 +76,16 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
     override fun onDetach() {
         super.onDetach()
         backPressedCallback.remove()
+    }
+
+    private fun handleBackButton() {
+        showCloseDialog(
+            title = getString(R.string.finish_live),
+            content = getString(R.string.want_to_finish_live),
+            confirmHandler = {
+                endLiveStreaming()
+            }
+        )
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -99,17 +113,77 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
         }
 
         requireArguments().run {
-            streamingInfo = getParcelable(PreferenceManager.KEY_STREAMING_INFO)
+            accessToken = getString(PreferenceManager.KEY_ACCESS_TOKEN) ?: ""
         }
 
-        if (streamingInfo == null) {
-            Toast.makeText(requireContext(), "stream key and app user id should not be empty", Toast.LENGTH_SHORT).show()
+        if (accessToken.isEmpty()) {
+            Toast.makeText(requireContext(), "access token should not be empty", Toast.LENGTH_SHORT).show()
             requireActivity().finish()
             return
         }
 
-        createStreamer(streamingInfo!!)
+        createStreamer(accessToken)
         initChatList()
+
+        lifecycleScope.launch {
+            fflStreamer?.streamerEvent?.collect { event ->
+                when (event) {
+                    is StreamerEvent.StreamerStateChanged -> {
+                        chatListAdapter.add(ChatItem("USER_ID", "USERNAME", event.state.name, "0"))
+                        when (event.state) {
+                            StreamerState.PREPARED -> {
+                            }
+                            StreamerState.STARTED -> {
+                                binding.playTime.start(System.currentTimeMillis())
+                            }
+                            StreamerState.STOPPED -> {
+                            }
+                            StreamerState.CLOSED -> {
+                                findNavController().navigate(R.id.finishFragment)
+                            }
+                        }
+                    }
+                    is StreamerEvent.BroadcastStateChanged -> {
+                        when (event.state) {
+                            BroadcastState.ACTIVE -> {
+                                binding.centerInfo.isVisible = false
+                                chatListAdapter.add(ChatItem("USER_ID", "USERNAME", "ACTIVE", "0"))
+                            }
+                            BroadcastState.INACTIVE -> {
+                                chatListAdapter.add(ChatItem("USER_ID", "USERNAME", "INACTIVE", "0"))
+                            }
+                        }
+                    }
+
+                    is StreamerEvent.LiveExists -> {
+                        val videoRoom = event.videoRoom
+                        showRestartDialog(videoRoom.title, getString(R.string.restart_live_content)) {
+                            viewModel.prepareRestart(videoRoom.title, videoRoom.id)
+                        }
+                    }
+                    is StreamerEvent.StreamAlarmPublished -> {
+                        chatListAdapter.add(ChatItem("USER_ID", "USERNAME", event.state.name, "0"))
+                    }
+                    is StreamerEvent.CameraZoomChanged -> {
+                        println("zoom: ${event.zoomFactor}")
+                    }
+                    is StreamerEvent.VideoBitrateChanged -> {
+                        println("bitrate: ${event.bitrate}")
+                    }
+                    is StreamerEvent.MessageReceived -> {
+                        handleMessage(event.message)
+                    }
+                    is StreamerEvent.StreamerError -> {
+                        handleError(event.code, event.message)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        fflStreamer?.stop()
     }
 
     override fun onResume() {
@@ -119,7 +193,6 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        fflStreamer?.exit()
 
         binding.chatList.adapter = null
         _binding = null
@@ -158,6 +231,13 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
                             }
                         })
                 }
+                is StreamingState.BitrateChanger -> {
+                    if (it.value == 0) {
+                        fflStreamer?.liveManager()?.enableAdaptiveBitrate()
+                    } else {
+                        fflStreamer?.liveManager()?.setVideoBitrateOnFly(it.value)
+                    }
+                }
                 is StreamingState.NormalState -> {
                     fflStreamer?.liveManager()?.hideImage()
                 }
@@ -165,14 +245,16 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
                     // start live streaming
                     startLiveStreaming()
                 }
+                is StreamingState.RestartLiveState -> {
+                    fflStreamer?.restart(it.videoRoomId)
+                    isStreaming = true
+                }
                 is StreamingState.EndLiveState -> {
-                    endLiveStreaming()
+                    handleBackButton()
                 }
                 is StreamingState.MessageSendState -> {
                     if (it.receiver == null) {
-                        fflStreamer?.liveChat()?.sendMessage(it.message, it.customType, it.data)
-                    } else {
-                        fflStreamer?.liveChat()?.sendDirectMessage(it.receiver, it.message, it.customType, it.data)
+                        fflStreamer?.liveChat()?.sendMessage(it.message)
                     }
                 }
                 is StreamingState.EffectState -> {
@@ -189,36 +271,10 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
     /**
      * initialize streamer for live streaming
      */
-    private fun createStreamer(streamingInfo: StreamingInfo) {
-        scope.launch {
-            // create video room before live streaming
-            val createdVideoRoomInfo = ApiManager.getInstance().createVideoRoom(streamingInfo.appUserId, "Sample App Test")
-            videoRoomId = createdVideoRoomInfo.id
-            val channelKey = createdVideoRoomInfo.chat.channelKey
-
-            withContext(Dispatchers.Main) {
-                fflStreamer = FlipFlopLite.getStreamer(
-                    streamingInfo.chatAppId,
-                    FFLite.User(streamingInfo.userId, streamingInfo.userName),
-                    streamingInfo.streamKey,
-                    streamingInfo.chatToken,
-                    channelKey
-                ).apply {
-                    listener = this@StreamingFragment
-                    // comment this out if you do not want to test chatting
-                    enter()
-                    prepare(requireContext(), binding.liveView, FFStreamerConfig(videoBitrate = 3000 * 1024, fps = 30, sampleRate = 44100))
-                    zoomChangeListener = object : FFZoomChangeListener {
-                        override fun onZoomChanged(zoomFactor: Float) {
-                            binding.zoomFactor.text = zoomFactor.toString()
-                        }
-                    }
-                }
-
-                // need some time to get exposure after initializing streamer
-                // that's why this uses delay
-                viewModel.requestInitExposure(300)
-            }
+    private fun createStreamer(accessToken: String) {
+        fflStreamer = FlipFlopLite.getStreamer(accessToken).apply {
+            prepare(requireContext(), binding.liveView, FFStreamerConfig(videoBitrate = 2500 * 1024, fps = 30, sampleRate = 44100))
+            liveManager()?.enableAdaptiveBitrate()
         }
     }
 
@@ -226,21 +282,11 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
         binding.centerInfo.text = "Preparing live streaming.\nplease wait a minute for this message to disappear!"
         binding.centerInfo.isVisible = true
 
+        fflStreamer?.enter()
         fflStreamer?.start()
         binding.playTime.start(System.currentTimeMillis())
 
-        scope.launch {
-            // WARN: This is just test. You should not wait here like this on production.
-            // Check server api from FlipFlop Lite
-            delay(20_000)
-
-            ApiManager.getInstance().startBroadcast(videoRoomId)
-
-            withContext(Dispatchers.Main) {
-                binding.centerInfo.isVisible = false
-                Toast.makeText(requireContext(), "started broadcast!", Toast.LENGTH_LONG).show()
-            }
-        }
+        isStreaming = true
     }
 
     private fun endLiveStreaming() {
@@ -249,22 +295,15 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
         }
 
         finished = true
-        fflStreamer?.stop()
 
-        binding.centerInfo.text = "Ending live streaming.\nplease wait a minute!\n"
-        binding.centerInfo.isVisible = true
+        if (!isStreaming) {
+            findNavController().navigate(R.id.finishFragment)
+        } else {
+            fflStreamer?.stop()
+            fflStreamer?.exit()
 
-        scope.launch {
-            // WARN: This is just test. You should not wait here like this on production.
-            // Check server api from FlipFlop Lite
-            delay(5_000)
-
-            ApiManager.getInstance().endBroadcast(videoRoomId)
-
-            withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "ended broadcast!", Toast.LENGTH_LONG).show()
-                requireActivity().onBackPressedDispatcher.onBackPressed()
-            }
+            binding.centerInfo.text = "Ending live streaming.\nplease wait a minute!\n"
+            binding.centerInfo.isVisible = true
         }
     }
 
@@ -284,7 +323,7 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
     }
 
     private fun finish() {
-        fflStreamer?.listener = null
+
     }
 
     private fun processMainAction(action: MainAction) {
@@ -318,69 +357,66 @@ class StreamingFragment : Fragment(), FFLStreamerListener {
         }
     }
 
-    // FFStreamerListener
-    override fun onPrepared() {
-        println("onPrepared")
-    }
-
-    override fun onStarted() {
-        println("onStarted")
-    }
-
-    override fun onStopped() {
-        println("onStopped")
-    }
-
-    override fun onChatMessageReceived(item: FFMessage) {
-        println("onChatMessageReceived")
-        when (item.messageType) {
-            FFMessageType.JOIN -> {
-                chatListAdapter.add(ChatItem(item.userId, item.username, "joined ${item.username}", item.messageId ?: "0", item.channelKey))
-                viewModel.updateLiveCount(item.totalWatchCount)
+    private fun handleMessage(message: FFLMessage) {
+        when (message.origin) {
+            Origin.APP -> {
+                chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.message, "0"))
             }
-            FFMessageType.LEAVE -> {
-                viewModel.updateLiveCount(item.totalWatchCount)
+            Origin.MEMBER -> {
+                chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.message, "0"))
             }
-            FFMessageType.MESSAGE -> {
-                when (item.customType) {
-                    "manager" -> {
-                        chatListAdapter.add(ChatItem(item.userId, item.username, item.message, item.messageId ?: "0", item.channelKey))
+            Origin.SYSTEM -> {
+                when (message.customType) {
+                    "JOINED" -> {
+                        chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.customType, "0"))
+                    }
+                    "LEAVED" -> {
+                        chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, "LEFT", "0"))
+                    }
+                    "CHANNEL_STAT_UPDATED" -> {
+                        // show participant count
                     }
                     else -> {
-                        val message = if (item.meta?.hidden == true) {
-                            "hidden message"
-                        } else {
-                            item.message
-                        }
-                        chatListAdapter.add(ChatItem(item.userId, item.username, message, item.messageId ?: "0", item.channelKey))
+
                     }
                 }
             }
-            FFMessageType.DM -> {
-                // do something
-            }
-            FFMessageType.ADMIN -> {
-                // do something
-            }
             else -> {
-                // ignore at the moment
+
             }
         }
     }
 
-    override fun onVideoBitrateChanged(newBitrate: Int) {
-
+    private fun handleError(code: Int, message: String) {
+        println("error : $code / $message")
+        when (code) {
+            FFLErrorCode.MEDIA_CONNECTION_FAILED -> {
+                // failed to connect to media server
+            }
+            FFLErrorCode.MEDIA_STREAMING_REQUEST_FAILED -> {
+                // failed to start live streaming
+            }
+            FFLErrorCode.MEDIA_STREAMING_SEND_FAILED -> {
+                // failed to send data to media server
+            }
+        }
     }
 
-    override fun onInSufficientBW() {
-        println("onInSufficientBW")
+    private fun showRestartDialog(title: String, content: String, confirmHandler: () -> Unit) {
+        DialogBuilder.showShortDialog(requireContext(), title, content,
+            confirmListener = {
+                confirmHandler.invoke()
+            },
+            cancelable = false
+        )
     }
 
-    override fun onSufficientBW() {
-        println("onSufficientBW")
-    }
-
-    override fun onError(error: FlipFlopException) {
-        println("onError - ${error.code} / ${error.message}")
+    private fun showCloseDialog(title: String, content: String, confirmHandler: () -> Unit) {
+        DialogBuilder.showShortDialog(requireContext(), title, content,
+            confirmListener = {
+                confirmHandler.invoke()
+            },
+            cancelable = false
+        )
     }
 }

@@ -8,10 +8,15 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import com.jocoos.flipflop.sample.R
 import com.jocoos.flipflop.sample.databinding.StreamingPrepareFragmentBinding
+import com.jocoos.flipflop.sample.utils.launchAndRepeatOnLifecycle
 import com.jocoos.flipflop.sample.utils.setMarginBottom
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class StreamingPrepareFragment : Fragment() {
     private var _binding: StreamingPrepareFragmentBinding? = null
@@ -50,5 +55,22 @@ class StreamingPrepareFragment : Fragment() {
         }
 
         viewModel.requestConfig()
+
+        launchAndRepeatOnLifecycle(Lifecycle.State.CREATED) {
+            launch {
+                observeStreamState()
+            }
+        }
+    }
+
+    private suspend fun observeStreamState() {
+        viewModel.prepareAction.collectLatest {
+            when (it) {
+                is PrepareState.RestartState -> {
+                    viewModel.restart(it.videoRoomId)
+                    findNavController().navigate(R.id.liveFragment)
+                }
+            }
+        }
     }
 }

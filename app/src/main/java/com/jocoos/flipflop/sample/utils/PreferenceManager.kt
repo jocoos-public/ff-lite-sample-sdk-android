@@ -9,10 +9,12 @@ class PreferenceManager(context: Context) {
         private const val KEY_USERNAME = "username"
         private const val KEY_PASSWORD = "password"
 
+        const val KEY_ACCESS_TOKEN = "access-token"
+        const val KEY_VIDEO_INFO = "video-info"
+
         const val KEY_STREAMING_INFO = "streaming-info"
         const val KEY_LIVE_WATCH_INFO = "live-watch-info"
         const val KEY_VOD_INFO = "vod-info"
-        const val KEY_VIDEO_INFO = "video-info"
         const val KEY_STREAM_KEY = "streak-key"
         const val KEY_LIVE_URL = "live-url"
         const val KEY_VOD_URL = "vod-url"

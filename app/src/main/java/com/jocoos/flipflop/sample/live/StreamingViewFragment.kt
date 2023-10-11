@@ -7,17 +7,27 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.jocoos.flipflop.*
+import com.jocoos.flipflop.FFLErrorCode
+import com.jocoos.flipflop.FFLLivePlayer
+import com.jocoos.flipflop.FlipFlopException
+import com.jocoos.flipflop.FlipFlopLite
+import com.jocoos.flipflop.api.model.FFLMessage
+import com.jocoos.flipflop.api.model.Origin
+import com.jocoos.flipflop.events.BroadcastState
+import com.jocoos.flipflop.events.PlayerEvent
+import com.jocoos.flipflop.events.PlayerState
+import com.jocoos.flipflop.events.collect
+import com.jocoos.flipflop.sample.R
 import com.jocoos.flipflop.sample.databinding.StreamingViewFragmentBinding
+import com.jocoos.flipflop.sample.utils.DialogBuilder
 import com.jocoos.flipflop.sample.utils.PreferenceManager
+import kotlinx.coroutines.launch
 
-/**
- * check createPlayer()
- */
-class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
+class StreamingViewFragment : Fragment() {
     companion object {
         fun newInstance() = StreamingViewFragment()
     }
@@ -25,6 +35,7 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
     private var _binding: StreamingViewFragmentBinding? = null
     private val binding get() = _binding!!
 
+    private var accessToken: String = ""
     private var liveWatchInfo: LiveWatchInfo? = null
     private var player: FFLLivePlayer? = null
     private val chatListAdapter = ChatListAdapter()
@@ -39,6 +50,7 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         requireArguments().run {
+            accessToken = getString(PreferenceManager.KEY_ACCESS_TOKEN) ?: ""
             liveWatchInfo = getParcelable(PreferenceManager.KEY_LIVE_WATCH_INFO)
         }
         if (liveWatchInfo == null) {
@@ -51,12 +63,61 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
             showMessageDialog("")
         }
 
-        createPlayer()
+        createPlayer(accessToken, liveWatchInfo!!.videoRoomId, liveWatchInfo!!.channelId)
         initChatList()
-    }
 
-    override fun onStart() {
-        super.onStart()
+        lifecycleScope.launch {
+            player?.livePlayerEvent?.collect { event ->
+                when (event) {
+                    is PlayerEvent.PlayerStateChanged -> {
+                        chatListAdapter.add(ChatItem("appUserId", "appUsername", event.state.name, "0"))
+                        when (event.state) {
+                            PlayerState.PREPARED -> {
+
+                            }
+                            PlayerState.STARTED -> {
+
+                            }
+                            PlayerState.BUFFERING -> {
+
+                            }
+                            PlayerState.STOPPED -> {
+
+                            }
+                            PlayerState.COMPLETED -> {
+
+                            }
+                            PlayerState.CLOSED -> {
+                                showCloseDialog(
+                                    title = getString(R.string.finish_live),
+                                    content = "Thank you!",
+                                    confirmHandler = {
+                                        findNavController().navigateUp()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    is PlayerEvent.BroadcastStateChanged -> {
+                        chatListAdapter.add(ChatItem("appUserId", "appUsername", event.state.name, "0"))
+                        when (event.state) {
+                            BroadcastState.ACTIVE -> {
+
+                            }
+                            BroadcastState.INACTIVE -> {
+
+                            }
+                        }
+                    }
+                    is PlayerEvent.MessageReceived -> {
+                        handleMessage(event.message)
+                    }
+                    is PlayerEvent.PlayerError -> {
+                        handleError(event.code, event.message)
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -65,7 +126,6 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
     override fun onResume() {
         super.onResume()
         player?.apply {
-            enter()
             start(liveWatchInfo!!.liveUrl)
         }
     }
@@ -92,18 +152,12 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
      * you should get parameters(appId, user info, gossipToken, channelKey) from server api
      * (client app -> belive server -> flipflop lite server)
      */
-    private fun createPlayer() {
+    private fun createPlayer(accessToken: String, videoRoomId: Long, channelId: Long) {
         binding.liveView.visibility = VISIBLE
 
-        player = FlipFlopLite.getLivePlayer(
-            liveWatchInfo!!.chatAppId,
-            FFLite.User(liveWatchInfo!!.userId, liveWatchInfo!!.userName),
-            liveWatchInfo!!.chatToken,
-            liveWatchInfo!!.channelKey
-        ).apply {
-            listener = this@StreamingViewFragment
-            enter()
+        player = FlipFlopLite.getLivePlayer(accessToken, videoRoomId, channelId).apply {
             prepare(requireContext(), binding.liveView)
+            enter()
         }
     }
 
@@ -116,93 +170,70 @@ class StreamingViewFragment : Fragment(), FFLLivePlayerListener {
         }
     }
 
+    private fun sendMessage(message: String) {
+        lifecycleScope.launch {
+            player?.liveChat()?.sendMessage(message)
+        }
+    }
+
     private fun showMessageDialog(message: String = "") {
         val dialog = StreamingMessageDialogFragment(
             message = message,
             sendListener = {
-                player?.liveChat()?.sendMessage(it)
+                sendMessage(it)
             },
         )
         dialog.show(childFragmentManager, dialog.tag)
     }
 
-    override fun onPrepared() {
-        println("onPrepared")
+    private fun showCloseDialog(title: String, content: String, confirmHandler: () -> Unit) {
+        DialogBuilder.showShortDialog(requireContext(), title, content,
+            confirmListener = {
+                confirmHandler.invoke()
+            },
+            cancelable = false
+        )
     }
 
-    override fun onStarted() {
-        println("onStarted")
-    }
-
-    override fun onBuffering() {
-        println("onBuffering")
-    }
-
-    override fun onCompleted() {
-        println("onCompleted")
-        Toast.makeText(requireContext(), "live has been finished", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onStopped() {
-        println("onStopped")
-    }
-
-    override fun onChatMessageReceived(item: FFMessage) {
-        when (item.messageType) {
-            FFMessageType.JOIN -> {
-                chatListAdapter.add(ChatItem(item.userId, item.username, "joined ${item.username}", item.messageId ?: "0", item.channelKey))
+    private fun handleMessage(message: FFLMessage) {
+        when (message.origin) {
+            Origin.APP -> {
+                chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.message, "0"))
             }
-            FFMessageType.LEAVE -> {
-                // do something
+            Origin.MEMBER -> {
+                chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.message, "0"))
             }
-            FFMessageType.MESSAGE -> {
-                // do something
-                chatListAdapter.add(ChatItem(item.userId, item.username, item.message, item.messageId ?: "0", item.channelKey))
-            }
-            FFMessageType.DM -> {
-                // do something
-            }
-            FFMessageType.ADMIN -> {
-                when (item.customType) {
-                    COMMAND_MESSAGE_DELETE -> {
-                        // do something
+            Origin.SYSTEM -> {
+                when (message.customType) {
+                    "JOINED" -> {
+                        chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.customType, "0"))
                     }
-                    COMMAND_MESSAGE_DELETE_BY_ADMIN -> {
-                        // do something
+                    "LEAVED" -> {
+                        chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, "LEFT", "0"))
                     }
-                    COMMAND_MSG -> {
-                        // do something
-                    }
-                    COMMAND_DM -> {
-                        // do something
-                    }
-                    COMMAND_BLOCK -> {
-                        // do something
-                    }
-                    COMMAND_ALERT -> {
-                        // do something
-                    }
-                    COMMAND_PROFANITY_REPLACE -> {
-                        // do something
-                    }
-                    COMMAND_PRIVATE_MESSAGE -> {
-                        // do something
-                    }
-                    COMMAND_PUBLIC_MESSAGE -> {
-                        // do something
+                    "CHANNEL_STAT_UPDATED" -> {
+                        // show participant count
                     }
                     else -> {
-                        // ignore
+
                     }
                 }
             }
             else -> {
-                // ignore at the moment
+
             }
         }
     }
 
-    override fun onError(error: FlipFlopException) {
-
+    private fun handleError(code: Int, message: String) {
+        println("error : $code / $message")
+        when (code) {
+            FFLErrorCode.SERVER_VIDEO_ROOM_JOIN_ERROR -> {
+                // failed to join live
+            }
+            FFLErrorCode.SERVER_VIDEO_ROOM_LEAVE_ERROR -> {
+                // failed to leave live
+            }
+        }
     }
 }

@@ -6,13 +6,20 @@ The sample app for FlipFlop Lite SDK
 
  - This repository provides live streaming samples to demonstrate how to use the FlipFlop Lite SDK
 
+## Before you start sample app
+
+ - For live streaming and watching via the SDK, you need to get an access token from the FlipFlop Liter server.
+ - You need to implement your own server to get an access token from the FlipFlop Lite server so that you can pass access token to the client app.
+ - Get access token from FlipFlop Lite server
+   - [Member Login](https://jocoos-public.github.io/dev-book/jekyll/2023-07-02-Member_App_API.html)
+   - set access token to 'accessToken' variable of MainFragment
+ - Get video list from FlipFlop Lite server
+   - [Get VideoRooms](https://jocoos-public.github.io/dev-book/jekyll/2023-07-02-VideoRoom_App_API.html)
+   - set video list in MainListFragment
+
 ## Quick start
 
- - Run the sample server before building sample app for sdk
-   - Reference [sample server](https://github.com/jocoos-public/ff-lite-sample-app-server)
- - change "SAMPLE_SERVER_DOMAIN" in app level 'build.gradle' file to the ip(or domain) of your sample server
-   - The app needs to connect to the sample server
- - Build and run the sample app
+ - Refer to the [SDK Document](https://jocoos-public.github.io/dev-book/jekyll/2023-10-10-Android_Quick_Start.html)
 
 ## Project structure
 
@@ -28,6 +35,4 @@ The sample app for FlipFlop Lite SDK
    - StreamingViewFragment : to watch live
  - vod
    - PlayerVodFragment : to view VOD
- - api
-   - apiManager : connect to the sample server
  

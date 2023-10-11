@@ -11,6 +11,22 @@
         android:label="streaming_fragment"
         tools:layout="@layout/streaming_fragment">
 
+        <action
+            android:id="@+id/live"
+            app:destination="@id/finishFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/finishFragment"
+        android:name="com.jocoos.flipflop.sample.live.StreamingFinishFragment"
+        android:label="streaming_finish_fragment"
+        tools:layout="@layout/streaming_finish_fragment">
+
     </fragment>
 
 </navigation>

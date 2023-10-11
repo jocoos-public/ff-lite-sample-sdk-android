@@ -6,26 +6,33 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.jocoos.flipflop.*
+import com.jocoos.flipflop.api.model.FFLMessage
+import com.jocoos.flipflop.api.model.Origin
+import com.jocoos.flipflop.events.PlayerState
+import com.jocoos.flipflop.events.VodPlayerEvent
+import com.jocoos.flipflop.events.collect
+import com.jocoos.flipflop.sample.R
 import com.jocoos.flipflop.sample.databinding.PlayerVodFragmentBinding
+import com.jocoos.flipflop.sample.live.ChatItem
 import com.jocoos.flipflop.sample.live.ChatListAdapter
 import com.jocoos.flipflop.sample.live.VodInfo
+import com.jocoos.flipflop.sample.utils.DialogBuilder
 import com.jocoos.flipflop.sample.utils.PreferenceManager
-import com.jocoos.flipflop.sample.utils.toDateTime
+import kotlinx.coroutines.launch
 
-/**
- * check createPlayer()
- */
-class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
+class PlayerVodFragment : Fragment() {
 
     private var _binding: PlayerVodFragmentBinding? = null
     private val binding get() = _binding!!
     private val chatListAdapter = ChatListAdapter()
 
     private var player: FFLVodPlayer? = null
+    private var accessToken: String = ""
     private var vodInfo: VodInfo? = null
 
     override fun onCreateView(
@@ -39,6 +46,7 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         requireArguments().run {
+            accessToken = getString(PreferenceManager.KEY_ACCESS_TOKEN) ?: ""
             vodInfo = getParcelable(PreferenceManager.KEY_VOD_INFO)
         }
         if (vodInfo == null) {
@@ -48,24 +56,63 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
         }
 
         initChatList()
-        createPlayer()
-    }
+        createPlayer(accessToken, vodInfo!!.channelId, vodInfo!!.liveStartedAt)
 
-    override fun onStart() {
-        super.onStart()
+        lifecycleScope.launch {
+            player?.vodPlayerEvent?.collect { event ->
+                when (event) {
+                    is VodPlayerEvent.PlayerStateChanged -> {
+                        chatListAdapter.add(ChatItem("appUserId", "appUsername", event.state.name, "0"))
+                        when (event.state) {
+                            PlayerState.PREPARED -> {
+                                lifecycleScope.launch {
+                                    startPlayer()
+                                }
+                            }
+                            PlayerState.STARTED -> {
+                            }
+                            PlayerState.BUFFERING -> {
+
+                            }
+                            PlayerState.STOPPED -> {
+
+                            }
+                            PlayerState.CLOSED -> {
+
+                            }
+                            PlayerState.COMPLETED -> {
+                                showCompleteDialog()
+                            }
+                        }
+                    }
+                    is VodPlayerEvent.PositionChanged -> {
+                        handlePositionChanged(event.oldPositionMs, event.newPositionMs)
+                    }
+                    is VodPlayerEvent.MessageReceived -> {
+                        handleMessage(event.message)
+                    }
+                    is VodPlayerEvent.PlayerError -> {
+                        handleError(event.code, event.message)
+                    }
+                }
+            }
+        }
+
+        player?.apply {
+            prepare(requireContext(), binding.playerView)
+            enter()
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        player?.start(vodInfo!!.vodUrl)
+        startPlayer()
         binding.playerView.hideController()
     }
 
     override fun onPause() {
         super.onPause()
-        player?.apply {
-            stop()
-        }
+        stopPlayer()
     }
 
     override fun onDestroyView() {
@@ -80,18 +127,21 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
         player?.exit()
     }
 
-    private fun createPlayer() {
-        player = FlipFlopLite.getVodPlayer(
-            vodInfo!!.chatAppId,
-            vodInfo!!.channelKey,
-            vodInfo!!.chatToken,
-            vodInfo?.liveStartedAt?.toDateTime()?.time ?: 0, // change it to start time of the live session
-            vodInfo!!.userId
-        ).apply {
-            listener = this@PlayerVodFragment
-            enter()
+    private fun createPlayer(accessToken: String, channelId: Long, liveStartedAt: String) {
+        player = FlipFlopLite.getVodPlayer(accessToken, channelId, liveStartedAt).apply {
             prepare(requireContext(), binding.playerView)
+            enter()
         }
+    }
+
+    private fun startPlayer() {
+        vodInfo?.vodUrl?.let {
+            player?.start(it)
+        }
+    }
+
+    private fun stopPlayer() {
+        player?.stop()
     }
 
     private fun initChatList() {
@@ -103,57 +153,53 @@ class PlayerVodFragment : Fragment(), FFLVodPlayerListener {
         }
     }
 
-    private fun addJoinMessage(username: String) {
-        // show join message
+    private fun showCompleteDialog() {
+        DialogBuilder.showShortDialog(
+            context = requireContext(),
+            title = getString(R.string.finish),
+            content = getString(R.string.want_to_finish_vod),
+            dismissListener = {
+                findNavController().navigateUp()
+            },
+            cancelable = false
+        )
     }
 
-    override fun onPositionChanged(oldPositionMs: Long, newPositionMs: Long) {
-        println("onPositionChanged")
+    private fun handlePositionChanged(oldPositionMs: Long, newPositionMs: Long) {
+        chatListAdapter.removeAll()
     }
 
-    override fun onPrepared() {
-        println("onPrepared")
-        player?.start(vodInfo!!.vodUrl)
-    }
-
-    override fun onStarted() {
-        println("onStarted")
-    }
-
-    override fun onBuffering() {
-
-    }
-
-    override fun onStopped() {
-        println("onStopped")
-    }
-
-    override fun onCompleted() {
-        println("onCompleted")
-        Toast.makeText(requireContext(), "vod has been finished", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onChatMessageReceived(item: FFMessage) {
-        when (item.messageType) {
-            FFMessageType.JOIN -> {
-                addJoinMessage(item.username)
+    private fun handleMessage(message: FFLMessage) {
+        when (message.origin) {
+            Origin.APP -> {
+                chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.message, "0"))
             }
-            FFMessageType.MESSAGE -> {
-                // do something
+            Origin.MEMBER -> {
+                chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.message, "0"))
             }
-            FFMessageType.DM -> {
-                // do something
-            }
-            FFMessageType.COMMAND -> {
-                // do something
+            Origin.SYSTEM -> {
+                when (message.customType) {
+                    "JOINED" -> {
+                        chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, message.customType, "0"))
+                    }
+                    "LEAVED" -> {
+                        chatListAdapter.add(ChatItem(message.appUserId, message.appUsername, "LEFT", "0"))
+                    }
+                    "CHANNEL_STAT_UPDATED" -> {
+                        // show participant count
+                    }
+                    else -> {
+
+                    }
+                }
             }
             else -> {
-                // ignore at the moment
+
             }
         }
     }
 
-    override fun onError(error: FlipFlopException) {
-        println("onError : ${error.code} / ${error.message}")
+    private fun handleError(code: Int, message: String) {
+        println("error: $code / $message")
     }
 }
