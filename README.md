@@ -1,4 +1,4 @@
-# FlipFlop SDK Lite for Android
+# FlipFlop Lite SDK for Android
 
 The sample app for FlipFlop Lite SDK 
 
@@ -8,18 +8,18 @@ The sample app for FlipFlop Lite SDK
 
 ## Before you start sample app
 
- - For live streaming and watching via the SDK, you need to get an access token from the FlipFlop Liter server.
+ - For live streaming and watching via the SDK, you need to get an access token from the FlipFlop Lite server.
  - You need to implement your own server to get an access token from the FlipFlop Lite server so that you can pass access token to the client app.
  - Get access token from FlipFlop Lite server
-   - [Member Login](https://jocoos-public.github.io/dev-book/jekyll/2023-07-02-Member_App_API.html)
+   - [Member Login](https://jocoos-public.github.io/dev-book/jekyll/2023-10-16-App-Member-API.html#member-login)
    - set access token to 'accessToken' variable of MainFragment
  - Get video list from FlipFlop Lite server
-   - [Get VideoRooms](https://jocoos-public.github.io/dev-book/jekyll/2023-07-02-VideoRoom_App_API.html)
+   - [Get VideoRooms](https://jocoos-public.github.io/dev-book/jekyll/2023-10-16-Member-VideoRoom-API.html#get-videorooms)
    - set video list in MainListFragment
 
 ## Quick start
 
- - Refer to the [SDK Document](https://jocoos-public.github.io/dev-book/jekyll/2023-10-10-Android_Quick_Start.html)
+ - Refer to the [SDK Document](https://jocoos-public.github.io/dev-book/jekyll/2023-10-18-Android_1_Quick_Start.html)
 
 ## Project structure
 
