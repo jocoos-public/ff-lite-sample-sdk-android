@@ -26,21 +26,19 @@ data class StreamingInfo(
 
 @Parcelize
 data class LiveWatchInfo(
+    val videoRoomId: Long,
+    val channelId: Long,
     val liveUrl: String,
     val userId: String,
     val userName: String,
-    val chatToken: String,
-    val chatAppId: String,
-    val channelKey: String,
 ): Parcelable
 
 @Parcelize
 data class VodInfo(
+    val videoRoomId: Long,
+    val channelId: Long,
     val userId: String,
     val vodUrl: String,
-    val chatToken: String,
-    val chatAppId: String,
-    val channelKey: String,
     val liveStartedAt: String
 ): Parcelable
 
@@ -57,9 +55,15 @@ sealed class StreamingState {
     data class MicOnState(val isChecked: Boolean) : StreamingState()
     data class EffectState(val chatEffect: ChatEffect) : StreamingState()
     data class MessageSendState(val messageType: FFMessageType, val message: String, val customType: String, val data: String, val receiver: String? = null) : StreamingState()
+    data class BitrateChanger(val value: Int) : StreamingState()
+    data class RestartLiveState(val videoRoomId: Long) : StreamingState()
     object NormalState : StreamingState()
     object StartLiveState : StreamingState()
     object EndLiveState : StreamingState()
+}
+
+sealed class PrepareState {
+    data class RestartState(val title: String, val videoRoomId: Long) : PrepareState()
 }
 
 class StreamingOption {
@@ -92,6 +96,11 @@ class StreamingViewModel : ViewModel() {
         MutableSharedFlow()
     }
     val streamLiveAction = _streamLiveAction.asSharedFlow()
+
+    private val _prepareAction: MutableSharedFlow<PrepareState> by lazy {
+        MutableSharedFlow()
+    }
+    val prepareAction = _prepareAction.asSharedFlow()
 
     val streamingOption = StreamingOption()
 
@@ -185,6 +194,12 @@ class StreamingViewModel : ViewModel() {
         }
     }
 
+    fun restart(videoRoomId: Long) {
+        onLaunch(Dispatchers.Main) {
+            _streamAction.emit(StreamingState.RestartLiveState(videoRoomId))
+        }
+    }
+
     fun sendChatEffect(chatEffect: ChatEffect) {
         onLaunch(Dispatchers.Main) {
             _streamAction.emit(StreamingState.EffectState(chatEffect))
@@ -208,6 +223,18 @@ class StreamingViewModel : ViewModel() {
     fun endBroadcast() {
         onLaunch(Dispatchers.Main) {
             _streamAction.emit(StreamingState.EndLiveState)
+        }
+    }
+
+    fun changeBitrate(value: Int) {
+        onLaunch(Dispatchers.Main) {
+            _streamAction.emit(StreamingState.BitrateChanger(value))
+        }
+    }
+
+    fun prepareRestart(title: String, videoRoomId: Long) {
+        onLaunch(Dispatchers.Main) {
+            _prepareAction.emit(PrepareState.RestartState(title, videoRoomId))
         }
     }
 }

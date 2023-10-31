@@ -19,5 +19,11 @@
     <string name="no_items">No items</string>
     <string name="message_send">Input message</string>
     <string name="username_hint">Username</string>
+    <string name="restart_live_content">Would like to restart live?</string>
+    <string name="finish_live">Live finish</string>
+    <string name="finish">finish</string>
+    <string name="want_to_finish_vod">Video has been finished</string>
+    <string name="want_to_finish_live">Do you want to finish live?</string>
+    <string name="live_is_finished">Live has been finished</string>
 
 </resources>

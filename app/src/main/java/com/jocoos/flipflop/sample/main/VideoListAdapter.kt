@@ -11,13 +11,14 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 class VideoInfo(
+    val videoRoomId: Long,
+    val channelId: Long,
     val videoRoomState: String,
     val vodState: String,
     val liveUrl: String?,
     val vodUrl: String?,
     val username: String,
     val title: String,
-    val channelKey: String,
     val createdAt: String?
 ): Parcelable
 

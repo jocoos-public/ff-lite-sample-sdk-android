@@ -1,5 +1,6 @@
 package com.jocoos.flipflop.sample.live
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -11,9 +12,7 @@ data class ChatItem(
     val username: String,
     val message: String,
     val messageId: String,
-    val channelKey: String,
     val createdAt: Date? = Date(),
-    val hidden: Boolean =false,
 )
 
 class ChatListAdapter : RecyclerView.Adapter<ChatListAdapter.ChatItemViewHolder>() {
@@ -22,6 +21,12 @@ class ChatListAdapter : RecyclerView.Adapter<ChatListAdapter.ChatItemViewHolder>
     fun add(chat: ChatItem) {
         items.add(chat)
         notifyItemInserted(items.size - 1)
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun removeAll() {
+        items.clear()
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatItemViewHolder {
@@ -42,11 +47,7 @@ class ChatListAdapter : RecyclerView.Adapter<ChatListAdapter.ChatItemViewHolder>
     inner class ChatItemViewHolder(private val binding: ChatListItemBinding) : RecyclerView.ViewHolder(binding.root) {
         fun setItem(item: ChatItem) {
             binding.chatUsername.text = item.username
-            binding.chatMessage.text = if (item.hidden) {
-                "hidden message"
-            } else {
-                item.message
-            }
+            binding.chatMessage.text = item.message
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.jocoos.flipflop.sample.main
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,25 +8,19 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.jocoos.flipflop.sample.FlipFlopSampleApp
 import com.jocoos.flipflop.sample.R
-import com.jocoos.flipflop.sample.api.ApiManager
 import com.jocoos.flipflop.sample.databinding.MainListFragmentBinding
 import com.jocoos.flipflop.sample.live.LiveWatchInfo
 import com.jocoos.flipflop.sample.live.StreamingInfo
 import com.jocoos.flipflop.sample.live.VodInfo
-import com.jocoos.flipflop.sample.utils.IOCoroutineScope
 import com.jocoos.flipflop.sample.utils.PreferenceManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainListFragment : Fragment() {
     private var _binding: MainListFragmentBinding? = null
     private val binding get() = _binding!!
 
-    private val scope: CoroutineScope = IOCoroutineScope()
-
+    private lateinit var accessToken: String
     private var streamingInfo: StreamingInfo? = null
     private var videoListAdapter: VideoListAdapter? = null
 
@@ -41,10 +34,10 @@ class MainListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         requireArguments().run {
-            streamingInfo = getParcelable(PreferenceManager.KEY_STREAMING_INFO)
+            accessToken = getString(PreferenceManager.KEY_ACCESS_TOKEN) ?: ""
         }
-        if (streamingInfo == null) {
-            Toast.makeText(requireContext(), "need live info", Toast.LENGTH_SHORT).show()
+        if (accessToken.isEmpty()) {
+            Toast.makeText(requireContext(), "access token should not be empty", Toast.LENGTH_SHORT).show()
             findNavController().navigateUp()
             return
         }
@@ -66,32 +59,29 @@ class MainListFragment : Fragment() {
         loadVideoList()
     }
 
-    @SuppressLint("NotifyDataSetChanged")
+    /**
+     * UPDATE
+     */
     private fun loadVideoList() {
-        scope.launch {
-            val videoRooms = ApiManager.getInstance().getVideoRooms()
-
-            withContext(Dispatchers.Main) {
-                videoListAdapter?.setItems(videoRooms.content.filter {
-                    it.videoRoomState == "LIVE" || (it.videoRoomState == "ENDED" && (it.vodState == "ARCHIVED"))
-                }.map {
-                    VideoInfo(it.videoRoomState, it.vodState, it.liveUrl, it.vodUrl, it.member.appUserName, it.title, it.chat.channelKey, it.liveStartedAt)
-                })
-                videoListAdapter?.notifyDataSetChanged()
-            }
-        }
+        // this is example. you should get video list from FlipFlop Lite server
+        val videoList = listOf(
+            VideoInfo(0, 0, "LIVE", "", "liveUrl", "vodUrl", "appUserName", "title", "liveStartedAt"),
+            VideoInfo(0, 0, "LIVE", "", "liveUrl", "vodUrl", "appUserName", "title", "liveStartedAt"),
+            VideoInfo(0, 0, "ENDED", "ARCHIVED", "liveUrl", "vodUrl", "appUserName", "title", "liveStartedAt"),
+        )
+        videoListAdapter?.setItems(videoList)
     }
 
     private fun watchLive(videoInfo: VideoInfo) {
         val liveWatchInfo = LiveWatchInfo(
+            videoRoomId = videoInfo.videoRoomId,
+            channelId = videoInfo.channelId,
             liveUrl = videoInfo.liveUrl!!,
-            userId = streamingInfo!!.userId,
-            userName = streamingInfo!!.userName,
-            chatToken = streamingInfo!!.chatToken,
-            chatAppId = streamingInfo!!.chatAppId,
-            channelKey = videoInfo.channelKey,
+            userId = FlipFlopSampleApp.preferenceManager.userId,
+            userName = FlipFlopSampleApp.preferenceManager.username,
         )
         val bundle = Bundle().apply {
+            putString(PreferenceManager.KEY_ACCESS_TOKEN, accessToken)
             putParcelable(PreferenceManager.KEY_LIVE_WATCH_INFO, liveWatchInfo)
         }
         findNavController().navigate(R.id.watchLive, bundle)
@@ -99,14 +89,14 @@ class MainListFragment : Fragment() {
 
     private fun playVod(videoInfo: VideoInfo) {
         val vodInfo = VodInfo(
-            userId = streamingInfo!!.userId,
+            videoRoomId = videoInfo.videoRoomId,
+            channelId = videoInfo.channelId,
+            userId = FlipFlopSampleApp.preferenceManager.userId,
             vodUrl = videoInfo.vodUrl!!,
-            chatToken = streamingInfo!!.chatToken,
-            chatAppId = streamingInfo!!.chatAppId,
-            channelKey = videoInfo.channelKey,
             liveStartedAt = videoInfo.createdAt!!,
         )
         val bundle = Bundle().apply {
+            putString(PreferenceManager.KEY_ACCESS_TOKEN, accessToken)
             putParcelable(PreferenceManager.KEY_VOD_INFO, vodInfo)
         }
         findNavController().navigate(R.id.playVod, bundle)

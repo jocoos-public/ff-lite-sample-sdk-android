@@ -9,17 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.jocoos.flipflop.sample.FlipFlopSampleApp
-import com.jocoos.flipflop.sample.api.ApiManager
 import com.jocoos.flipflop.sample.databinding.LoginFragmentBinding
 import com.jocoos.flipflop.sample.main.MainActivity
 import com.jocoos.flipflop.sample.utils.IOCoroutineScope
-import com.jocoos.flipflop.sample.utils.PreferenceManager.Companion.testEmail
 import com.jocoos.flipflop.sample.utils.PreferenceManager.Companion.testPassword
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class LoginFragment : Fragment() {
     companion object {
@@ -50,14 +44,8 @@ class LoginFragment : Fragment() {
 
         binding.login.setOnClickListener {
             if (username.isNotBlank()) {
-                scope.launch {
-                    val response = ApiManager.getInstance().createUser(username, testPassword, testEmail)
-                    withContext(Dispatchers.Main) {
-                        FlipFlopSampleApp.preferenceManager.setUserInfo(response.id, username, testPassword)
-                        delay(200)
-                        showMain()
-                    }
-                }
+                FlipFlopSampleApp.preferenceManager.setUserInfo(System.currentTimeMillis().toString(), username, testPassword)
+                showMain()
             }
         }
     }

@@ -19,6 +19,10 @@ class FlipFlopSampleApp : Application() {
 
         // initialize FlipFlop Lite
         // there are two servers to connect : DEV, PROD
-        FlipFlopLite.initialize(server = FFLServer.DEV)
+        FlipFlopLite.initialize(applicationContext, server = FFLServer.DEV)
+
+        // or use following code if you want to connect to dedicated server
+        // val serverUri = "DEDICATED_SERVER_ADDRESS"
+        // FlipFlopLite.initialize(applicationContext, serverUri)
     }
 }
