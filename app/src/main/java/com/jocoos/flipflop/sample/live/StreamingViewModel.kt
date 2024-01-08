@@ -7,6 +7,7 @@ import com.jocoos.flipflop.ExposureCompensationRange
 import com.jocoos.flipflop.FFFilterType
 import com.jocoos.flipflop.FFMessageType
 import com.jocoos.flipflop.FFTransitionType
+import com.jocoos.flipflop.sample.main.VideoInfo
 import com.jocoos.flipflop.sample.utils.onLaunch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -57,6 +58,7 @@ sealed class StreamingState {
     data class MessageSendState(val messageType: FFMessageType, val message: String, val customType: String, val data: String, val receiver: String? = null) : StreamingState()
     data class BitrateChanger(val value: Int) : StreamingState()
     data class RestartLiveState(val videoRoomId: Long) : StreamingState()
+    data class PlayLive(val videoInfo: VideoInfo) : StreamingState()
     object NormalState : StreamingState()
     object StartLiveState : StreamingState()
     object EndLiveState : StreamingState()
@@ -235,6 +237,12 @@ class StreamingViewModel : ViewModel() {
     fun prepareRestart(title: String, videoRoomId: Long) {
         onLaunch(Dispatchers.Main) {
             _prepareAction.emit(PrepareState.RestartState(title, videoRoomId))
+        }
+    }
+
+    fun playLive(videoInfo: VideoInfo) {
+        onLaunch(Dispatchers.Main) {
+            _streamAction.emit(StreamingState.PlayLive(videoInfo))
         }
     }
 }

@@ -13,6 +13,14 @@
         tools:layout="@layout/streaming_prepare_fragment">
 
         <action
+            android:id="@+id/videosOption"
+            app:destination="@id/videosOptionFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
             android:id="@+id/cameraOption"
             app:destination="@id/cameraOptionFragment"
             app:enterAnim="@anim/nav_default_enter_anim"
@@ -39,6 +47,13 @@
     </fragment>
 
     <fragment
+        android:id="@+id/videosOptionFragment"
+        android:name="com.jocoos.flipflop.sample.live.LiveVideosFragment"
+        android:label="main_list_fragment"
+        tools:layout="@layout/main_list_fragment">
+    </fragment>
+
+    <fragment
         android:id="@+id/cameraOptionFragment"
         android:name="com.jocoos.flipflop.sample.live.CameraOptionFragment"
         android:label="camera_option_fragment"
@@ -57,6 +72,14 @@
         android:name="com.jocoos.flipflop.sample.live.StreamingLiveFragment"
         android:label="streaming_live_fragment"
         tools:layout="@layout/streaming_live_fragment">
+
+        <action
+            android:id="@+id/videosOption"
+            app:destination="@id/videosOptionFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
         <action
             android:id="@+id/cameraOption"

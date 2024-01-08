@@ -31,8 +31,10 @@ import com.jocoos.flipflop.events.BroadcastState
 import com.jocoos.flipflop.events.StreamerEvent
 import com.jocoos.flipflop.events.StreamerState
 import com.jocoos.flipflop.events.collect
+import com.jocoos.flipflop.sample.FlipFlopSampleApp
 import com.jocoos.flipflop.sample.R
 import com.jocoos.flipflop.sample.databinding.StreamingFragmentBinding
+import com.jocoos.flipflop.sample.main.VideoInfo
 import com.jocoos.flipflop.sample.utils.DialogBuilder
 import com.jocoos.flipflop.sample.utils.IOCoroutineScope
 import com.jocoos.flipflop.sample.utils.PreferenceManager
@@ -56,6 +58,7 @@ class StreamingFragment : Fragment() {
     private val viewModel: StreamingViewModel by viewModels()
     private var accessToken = ""
     private var fflStreamer: FFLStreamer? = null
+    private var fflPlayer: FFLLivePlayer? = null
 
     private val chatListAdapter = ChatListAdapter()
     private lateinit var backPressedCallback: OnBackPressedCallback
@@ -141,6 +144,9 @@ class StreamingFragment : Fragment() {
                             StreamerState.CLOSED -> {
                                 findNavController().navigate(R.id.finishFragment)
                             }
+                            StreamerState.TERMINATED -> {
+
+                            }
                         }
                     }
                     is StreamerEvent.BroadcastStateChanged -> {
@@ -184,6 +190,7 @@ class StreamingFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         fflStreamer?.stop()
+        fflPlayer?.stop()
     }
 
     override fun onResume() {
@@ -196,6 +203,11 @@ class StreamingFragment : Fragment() {
 
         binding.chatList.adapter = null
         _binding = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        fflPlayer?.exit()
     }
 
     private suspend fun observeStreamState() {
@@ -261,6 +273,9 @@ class StreamingFragment : Fragment() {
                     fflStreamer?.liveManager()?.setOverlayImage(resources.openRawResource(it.chatEffect.effectResId), FFScaleMode.NONE)
                     viewModel.endChatEffect()
                 }
+                is StreamingState.PlayLive -> {
+                    createPlayer(accessToken, it.videoInfo)
+                }
                 else -> {
 
                 }
@@ -275,6 +290,16 @@ class StreamingFragment : Fragment() {
         fflStreamer = FlipFlopLite.getStreamer(accessToken).apply {
             prepare(requireContext(), binding.liveView, FFStreamerConfig(videoBitrate = 2500 * 1024, fps = 30, sampleRate = 44100))
             liveManager()?.enableAdaptiveBitrate()
+            setVideoRoomInfo("Live by ${FlipFlopSampleApp.preferenceManager.username}")
+        }
+    }
+
+    private fun createPlayer(accessToken: String, videoInfo: VideoInfo) {
+        fflPlayer = FlipFlopLite.getLivePlayer(accessToken, videoInfo.videoRoomId, videoInfo.channelId).apply {
+            prepare(requireContext(), binding.livePlayer)
+        }.apply {
+            start(videoInfo.liveUrl!!)
+            enter()
         }
     }
 

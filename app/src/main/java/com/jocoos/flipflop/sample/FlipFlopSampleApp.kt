@@ -4,11 +4,14 @@ import android.app.Application
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jocoos.flipflop.FFLServer
 import com.jocoos.flipflop.FlipFlopLite
+import com.jocoos.flipflop.sample.api.DemoService
 import com.jocoos.flipflop.sample.utils.PreferenceManager
 
 class FlipFlopSampleApp : Application() {
     companion object {
         lateinit var preferenceManager: PreferenceManager
+        lateinit var demoService: DemoService
+        lateinit var accessToken: String
     }
 
     override fun onCreate() {
@@ -16,6 +19,11 @@ class FlipFlopSampleApp : Application() {
         AndroidThreeTen.init(this)
 
         preferenceManager = PreferenceManager(applicationContext)
+        demoService = DemoService(
+            "",
+            "",
+            ""
+        )
 
         // initialize FlipFlop Lite
         // there are two servers to connect : DEV, PROD

@@ -1,11 +1,13 @@
 package com.jocoos.flipflop.sample.main
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jocoos.flipflop.sample.FlipFlopSampleApp
@@ -15,6 +17,9 @@ import com.jocoos.flipflop.sample.live.LiveWatchInfo
 import com.jocoos.flipflop.sample.live.StreamingInfo
 import com.jocoos.flipflop.sample.live.VodInfo
 import com.jocoos.flipflop.sample.utils.PreferenceManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainListFragment : Fragment() {
     private var _binding: MainListFragmentBinding? = null
@@ -62,14 +67,25 @@ class MainListFragment : Fragment() {
     /**
      * UPDATE
      */
+    @SuppressLint("NotifyDataSetChanged")
     private fun loadVideoList() {
         // this is example. you should get video list from FlipFlop Lite server
-        val videoList = listOf(
-            VideoInfo(0, 0, "LIVE", "", "liveUrl", "vodUrl", "appUserName", "title", "liveStartedAt"),
-            VideoInfo(0, 0, "LIVE", "", "liveUrl", "vodUrl", "appUserName", "title", "liveStartedAt"),
-            VideoInfo(0, 0, "ENDED", "ARCHIVED", "liveUrl", "vodUrl", "appUserName", "title", "liveStartedAt"),
-        )
-        videoListAdapter?.setItems(videoList)
+        lifecycleScope.launch {
+            FlipFlopSampleApp.demoService.videoRooms()
+                .onSuccess {
+                    withContext(Dispatchers.Main) {
+                        videoListAdapter?.setItems(it.content.map {
+                            VideoInfo(it.id, it.channel.id, it.videoRoomState, it.vodState, it.liveUrl, it.vodUrl, "", it.title, it.liveStartedAt)
+                        })
+                        videoListAdapter?.notifyDataSetChanged()
+                    }
+                }
+                .onFailure {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), it.message, Toast.LENGTH_LONG).show()
+                    }
+                }
+        }
     }
 
     private fun watchLive(videoInfo: VideoInfo) {

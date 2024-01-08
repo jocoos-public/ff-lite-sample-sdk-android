@@ -13,6 +13,7 @@ import androidx.navigation.findNavController
 import com.jocoos.flipflop.FFMessageType
 import com.jocoos.flipflop.sample.R
 import com.jocoos.flipflop.sample.databinding.StreamingLiveFragmentBinding
+import com.jocoos.flipflop.sample.utils.PreferenceManager
 import com.jocoos.flipflop.sample.utils.launchAndRepeatOnLifecycle
 import com.jocoos.flipflop.sample.utils.setMarginBottom
 import com.jocoos.flipflop.sample.utils.setMarginTop
@@ -56,6 +57,9 @@ class StreamingLiveFragment : Fragment() {
         }
         binding.imageCamera.setOnClickListener {
             it.findNavController().navigate(R.id.cameraOption)
+        }
+        binding.imageVideos.setOnClickListener {
+            it.findNavController().navigate(R.id.videosOption)
         }
         binding.messageSend.setOnClickListener {
             showMessageDialog()

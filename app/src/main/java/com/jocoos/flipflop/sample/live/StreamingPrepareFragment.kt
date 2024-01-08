@@ -53,6 +53,9 @@ class StreamingPrepareFragment : Fragment() {
         binding.imageEtc.setOnClickListener {
             it.findNavController().navigate(R.id.moreOption)
         }
+        binding.imageVideos.setOnClickListener {
+            it.findNavController().navigate(R.id.videosOption)
+        }
 
         viewModel.requestConfig()
 

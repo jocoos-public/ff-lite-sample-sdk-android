@@ -57,6 +57,17 @@
         app:layout_constraintEnd_toStartOf="@+id/image_etc"
         app:layout_constraintTop_toTopOf="@+id/background_bottom" />
 
+    <ImageView
+        android:id="@+id/image_videos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic__1_asset_icon_22_22_ico_pip_1"
+        app:layout_constraintBottom_toBottomOf="@+id/background_bottom"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/background_bottom" />
+
     <TextView
         android:id="@+id/next"
         android:layout_width="120dp"
