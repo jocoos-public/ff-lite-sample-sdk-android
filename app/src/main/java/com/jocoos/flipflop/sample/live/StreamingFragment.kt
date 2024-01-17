@@ -288,8 +288,9 @@ class StreamingFragment : Fragment() {
      */
     private fun createStreamer(accessToken: String) {
         fflStreamer = FlipFlopLite.getStreamer(accessToken).apply {
-            prepare(requireContext(), binding.liveView, FFStreamerConfig(videoBitrate = 2500 * 1024, fps = 30, sampleRate = 44100))
-            liveManager()?.enableAdaptiveBitrate()
+            prepare(requireContext(), binding.liveView, FFStreamerConfig(
+                videoBitrate = 2500 * 1024, fps = 30, sampleRate = 44100,
+                echoCancellation = true, adaptiveBitrate = true))
             setVideoRoomInfo("Live by ${FlipFlopSampleApp.preferenceManager.username}")
         }
     }

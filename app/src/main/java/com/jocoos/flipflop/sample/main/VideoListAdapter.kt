@@ -62,6 +62,15 @@ class VideoListAdapter : RecyclerView.Adapter<VideoListAdapter.ViewHolder>() {
 
             binding.username.text = videoInfo.username
             binding.title.text = videoInfo.title
+            binding.content.text = if (videoInfo.videoRoomState == "ENDED") {
+                if (videoInfo.vodState == "ARCHIVED") {
+                    "VOD"
+                } else {
+                    videoInfo.vodState
+                }
+            } else {
+                videoInfo.videoRoomState
+            }
             binding.createdAt.text = videoInfo.createdAt
         }
     }

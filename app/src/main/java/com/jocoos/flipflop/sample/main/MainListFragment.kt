@@ -104,11 +104,15 @@ class MainListFragment : Fragment() {
     }
 
     private fun playVod(videoInfo: VideoInfo) {
+        if (videoInfo.vodUrl == null) {
+            return
+        }
+
         val vodInfo = VodInfo(
             videoRoomId = videoInfo.videoRoomId,
             channelId = videoInfo.channelId,
             userId = FlipFlopSampleApp.preferenceManager.userId,
-            vodUrl = videoInfo.vodUrl!!,
+            vodUrl = videoInfo.vodUrl,
             liveStartedAt = videoInfo.createdAt!!,
         )
         val bundle = Bundle().apply {
