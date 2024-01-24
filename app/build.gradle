@@ -49,7 +49,7 @@ android {
 }
 
 dependencies {
-    implementation('com.github.jocoos-public:ff-lite-android-sdk:1.4.8') {
+    implementation('com.github.jocoos-public:ff-lite-android-sdk:1.4.9') {
         transitive = true
     }
 

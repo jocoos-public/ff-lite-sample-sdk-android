@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.jocoos.flipflop.FFLErrorCode
 import com.jocoos.flipflop.FFLLivePlayer
+import com.jocoos.flipflop.FFLLivePlayerOptions
 import com.jocoos.flipflop.FlipFlopException
 import com.jocoos.flipflop.FlipFlopLite
 import com.jocoos.flipflop.api.model.FFLMessage

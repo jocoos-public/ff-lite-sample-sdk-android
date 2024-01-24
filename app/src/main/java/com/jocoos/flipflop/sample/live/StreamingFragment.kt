@@ -297,7 +297,7 @@ class StreamingFragment : Fragment() {
 
     private fun createPlayer(accessToken: String, videoInfo: VideoInfo) {
         fflPlayer = FlipFlopLite.getLivePlayer(accessToken, videoInfo.videoRoomId, videoInfo.channelId).apply {
-            prepare(requireContext(), binding.livePlayer)
+            prepare(requireContext(), binding.livePlayer, FFLLivePlayerOptions(true))
         }.apply {
             start(videoInfo.liveUrl!!)
             enter()
