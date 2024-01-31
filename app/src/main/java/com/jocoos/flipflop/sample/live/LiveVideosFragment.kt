@@ -73,7 +73,7 @@ class LiveVideosFragment : Fragment() {
                         videoListAdapter?.setItems(it.content.filter {
                             it.videoRoomState == "LIVE" && it.liveUrl != null
                         }.map {
-                            VideoInfo(it.id, it.channel.id, it.videoRoomState, it.vodState, it.liveUrl, it.vodUrl, "", it.title, it.liveStartedAt)
+                            VideoInfo(it.id, it.channel.id, it.videoRoomState, it.vodState, it.httpFlvPlayUrl ?: it.rtmpPlayUrl ?: it.liveUrl, it.vodUrl, "", it.title, it.liveStartedAt)
                         })
                         videoListAdapter?.notifyDataSetChanged()
                     }

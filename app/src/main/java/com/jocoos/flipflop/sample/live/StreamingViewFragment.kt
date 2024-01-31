@@ -157,7 +157,7 @@ class StreamingViewFragment : Fragment() {
         binding.liveView.visibility = VISIBLE
 
         player = FlipFlopLite.getLivePlayer(accessToken, videoRoomId, channelId).apply {
-            prepare(requireContext(), binding.liveView)
+            prepare(requireContext(), binding.liveView, FFLLivePlayerOptions(false))
             enter()
         }
     }

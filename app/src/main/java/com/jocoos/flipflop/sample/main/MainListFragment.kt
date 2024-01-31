@@ -75,7 +75,7 @@ class MainListFragment : Fragment() {
                 .onSuccess {
                     withContext(Dispatchers.Main) {
                         videoListAdapter?.setItems(it.content.map {
-                            VideoInfo(it.id, it.channel.id, it.videoRoomState, it.vodState, it.liveUrl, it.vodUrl, "", it.title, it.liveStartedAt)
+                            VideoInfo(it.id, it.channel.id, it.videoRoomState, it.vodState, it.httpFlvPlayUrl ?: it.rtmpPlayUrl ?: it.liveUrl, it.vodUrl, "", it.title, it.liveStartedAt)
                         })
                         videoListAdapter?.notifyDataSetChanged()
                     }

@@ -19,7 +19,7 @@ class VideoInfo(
     val vodUrl: String?,
     val username: String,
     val title: String,
-    val createdAt: String?
+    val createdAt: String?,
 ): Parcelable
 
 class VideoListAdapter : RecyclerView.Adapter<VideoListAdapter.ViewHolder>() {
