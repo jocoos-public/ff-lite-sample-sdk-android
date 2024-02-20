@@ -38,6 +38,7 @@ import com.jocoos.flipflop.sample.main.VideoInfo
 import com.jocoos.flipflop.sample.utils.DialogBuilder
 import com.jocoos.flipflop.sample.utils.IOCoroutineScope
 import com.jocoos.flipflop.sample.utils.PreferenceManager
+import com.jocoos.flipflop.sample.utils.RippleFilterRender
 import com.jocoos.flipflop.sample.utils.launchAndRepeatOnLifecycle
 import com.jocoos.flipflop.sample.utils.setMarginBottom
 import kotlinx.coroutines.CoroutineScope
@@ -217,7 +218,10 @@ class StreamingFragment : Fragment() {
                     processCameraAction(it.cameraAction)
                 }
                 is StreamingState.FilterState -> {
-                    fflStreamer?.liveManager()?.setFilter(it.filterType)
+                    when (it.filterType) {
+                        FFFilterType.TONE_DRAMATIC_COOL -> fflStreamer?.liveManager()?.setFilter(RippleFilterRender())
+                        else -> fflStreamer?.liveManager()?.setFilter(it.filterType)
+                    }
                 }
                 is StreamingState.ExposureState -> {
                     fflStreamer?.liveManager()?.setExposureCompensation(it.value)
